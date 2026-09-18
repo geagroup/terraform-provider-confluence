@@ -32,7 +32,7 @@ type AttachmentLinks struct {
 
 func (c *Client) CreateAttachment(attachment *Attachment, data, pageId string) (*Attachment, error) {
 	var response AttachmentResults
-	path := fmt.Sprintf("/rest/api/content/%s/child/attachment", pageId)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s/child/attachment", pageId)
 	if err := c.PostForm(path, attachment.Title, data, &response); err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *Client) CreateAttachment(attachment *Attachment, data, pageId string) (
 func (c *Client) UpdateAttachment(attachment *Attachment, data, pageId string) (*Attachment, error) {
 	var response AttachmentResults
 	attachment.Version.Number++
-	path := fmt.Sprintf("/rest/api/content/%s/child/attachment/%s", pageId, attachment.Id)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s/child/attachment/%s", pageId, attachment.Id)
 	if err := c.PutForm(path, attachment.Title, data, &response); err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (c *Client) UpdateAttachment(attachment *Attachment, data, pageId string) (
 
 func (c *Client) GetAttachment(id string) (*Attachment, error) {
 	var response Attachment
-	path := fmt.Sprintf("/rest/api/content/%s?expand=version", id)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s?expand=version", id)
 	if err := c.Get(path, &response); err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *Client) GetAttachmentBody(attachment *Attachment) (string, error) {
 }
 
 func (c *Client) DeleteAttachment(id, pageId string) error {
-	path := fmt.Sprintf("/rest/api/content/%s", id)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s", id)
 	if err := c.Delete(path); err != nil {
 		return err
 	}

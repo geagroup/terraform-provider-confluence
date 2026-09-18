@@ -108,11 +108,9 @@ func resourceContentDelete(d *schema.ResourceData, m interface{}) error {
 
 func contentFromResourceData(d *schema.ResourceData) *Content {
 	result := &Content{
-		Id:   d.Id(),
-		Type: d.Get("type").(string),
-		Space: &SpaceKey{
-			Key: d.Get("space").(string),
-		},
+		Id:      d.Id(),
+		Type:    d.Get("type").(string),
+		SpaceId: d.Get("space").(string),
 		Body: &Body{
 			Storage: &Storage{
 				Value:          d.Get("body").(string),
@@ -156,7 +154,7 @@ func updateResourceDataFromContent(d *schema.ResourceData, content *Content, cli
 	d.SetId(content.Id)
 	m := map[string]interface{}{
 		"type":    content.Type,
-		"space":   content.Space.Key,
+		"space":   content.SpaceId,
 		"body":    content.Body.Storage.Value,
 		"title":   content.Title,
 		"version": content.Version.Number,

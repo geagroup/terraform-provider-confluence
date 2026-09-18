@@ -38,6 +38,12 @@ func Provider() *schema.Provider {
 				Description: "Confluence path context (Will default to /wiki if using an atlassian.net hostname)",
 				DefaultFunc: schema.EnvDefaultFunc("CONFLUENCE_CONTEXT", ""),
 			},
+			"cloud_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Atlassian Cloud ID used for service account authentication",
+				DefaultFunc: schema.EnvDefaultFunc("CONFLUENCE_CLOUD_ID", ""),
+			},
 			"user": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -62,13 +68,18 @@ func Provider() *schema.Provider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	return NewClient(&NewClientInput{
+	client, err := NewClient(&NewClientInput{
 		site:             d.Get("site").(string),
 		siteScheme:       d.Get("site_scheme").(string),
 		publicSite:       d.Get("public_site").(string),
 		publicSiteScheme: d.Get("public_site_scheme").(string),
 		context:          d.Get("context").(string),
+		cloudID:          d.Get("cloud_id").(string),
 		token:            d.Get("token").(string),
 		user:             d.Get("user").(string),
-	}), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }

@@ -30,6 +30,16 @@ func TestProvider_impl(t *testing.T) {
 	var _ *schema.Provider = Provider()
 }
 
+func TestProviderCloudIDOptional(t *testing.T) {
+	cloudID := Provider().Schema["cloud_id"]
+	if cloudID == nil {
+		t.Fatal("cloud_id must be defined")
+	}
+	if !cloudID.Optional {
+		t.Fatal("cloud_id must be optional")
+	}
+}
+
 func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("CONFLUENCE_SITE"); v == "" {
 		t.Fatal("CONFLUENCE_SITE must be set for acceptance tests")

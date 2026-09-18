@@ -9,12 +9,34 @@ type Body struct {
 	Storage *Storage `json:"storage,omitempty"`
 }
 
+type contentBodyRequest struct {
+	Representation string `json:"representation"`
+	Value          string `json:"value"`
+}
+
+type updateContentRequest struct {
+	Id      string             `json:"id"`
+	Status  string             `json:"status"`
+	Title   string             `json:"title"`
+	Body    contentBodyRequest `json:"body"`
+	Version *Version           `json:"version,omitempty"`
+}
+
+type createContentRequest struct {
+	SpaceId  string             `json:"spaceId"`
+	Status   string             `json:"status"`
+	Title    string             `json:"title"`
+	ParentId string             `json:"parentId,omitempty"`
+	Body     contentBodyRequest `json:"body"`
+	Subtype  string             `json:"subtype"`
+}
+
 // Content is a primary resource in Confluence
 type Content struct {
 	Id        string           `json:"id,omitempty"`
 	Type      string           `json:"type,omitempty"`
 	Title     string           `json:"title,omitempty"`
-	Space     *SpaceKey        `json:"space,omitempty"`
+	SpaceId   string           `json:"spaceId,omitempty"`
 	Version   *Version         `json:"version,omitempty"`
 	Body      *Body            `json:"body,omitempty"`
 	Links     *ContentLinks    `json:"_links,omitempty"`
@@ -26,11 +48,6 @@ type Content struct {
 type ContentLinks struct {
 	Context string `json:"context,omitempty"`
 	WebUI   string `json:"webui,omitempty"`
-}
-
-// SpaceKey is part of Content
-type SpaceKey struct {
-	Key string `json:"key,omitempty"`
 }
 
 // Storage is part of Body
@@ -56,16 +73,55 @@ type Label struct {
 }
 
 func (c *Client) CreateContent(content *Content) (*Content, error) {
+	request := createContentRequestFromContent(content)
+	// requestBody, err := json.MarshalIndent(request, "", "  ")
+	// if err != nil {
+	// 	return nil, fmt.Errorf("marshal CreateContent request: %w", err)
+	// }
+
+	// log.Printf("[DEBUG] CreateContent request:\n%s", requestBody)
+
 	var response Content
-	if err := c.Post("/rest/api/content", content, &response); err != nil {
+	if err := c.Post("/wiki/api/v2/pages", request, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
+func createContentRequestFromContent(content *Content) *createContentRequest {
+	request := &createContentRequest{
+		SpaceId: content.SpaceId,
+		Status:  "current",
+		Title:   content.Title,
+		Body: contentBodyRequest{
+			Representation: "storage",
+			Value:          content.Body.Storage.Value,
+		},
+	}
+	if len(content.Ancestors) > 0 {
+		request.ParentId = content.Ancestors[len(content.Ancestors)-1].Id
+	}
+	return request
+}
+
+func updateContentRequestFromContent(content *Content) *updateContentRequest {
+	request := &updateContentRequest{
+		Id:     content.Id,
+		Status: "current",
+		Title:  content.Title,
+		Body: contentBodyRequest{
+			Representation: "storage",
+			Value:          content.Body.Storage.Value,
+		},
+		Version: &Version{Number: content.Version.Number},
+	}
+
+	return request
+}
+
 func (c *Client) GetContent(id string) (*Content, error) {
 	var response Content
-	path := fmt.Sprintf("/rest/api/content/%s?expand=space,body.storage,version,ancestors", id)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s?body-format=storage", id)
 	if err := c.Get(path, &response); err != nil {
 		return nil, err
 	}
@@ -75,15 +131,16 @@ func (c *Client) GetContent(id string) (*Content, error) {
 func (c *Client) UpdateContent(content *Content) (*Content, error) {
 	var response Content
 	content.Version.Number++
-	path := fmt.Sprintf("/rest/api/content/%s", content.Id)
-	if err := c.Put(path, content, &response); err != nil {
+	request := updateContentRequestFromContent(content)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s", content.Id)
+	if err := c.Put(path, request, &response); err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
 func (c *Client) DeleteContent(id string) error {
-	path := fmt.Sprintf("/rest/api/content/%s", id)
+	path := fmt.Sprintf("/wiki/api/v2/pages/%s", id)
 	if err := c.Delete(path); err != nil {
 		return err
 	}
