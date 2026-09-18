@@ -97,6 +97,7 @@ func createContentRequestFromContent(content *Content) *createContentRequest {
 			Representation: "storage",
 			Value:          content.Body.Storage.Value,
 		},
+		Subtype: "page",
 	}
 	if len(content.Ancestors) > 0 {
 		request.ParentId = content.Ancestors[len(content.Ancestors)-1].Id
