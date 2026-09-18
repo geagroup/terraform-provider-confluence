@@ -25,7 +25,7 @@ func resourceContent() *schema.Resource {
 			},
 			"space": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Required:    false,
 				ForceNew:    true,
 				DefaultFunc: schema.EnvDefaultFunc("CONFLUENCE_SPACE", nil),
 			},
