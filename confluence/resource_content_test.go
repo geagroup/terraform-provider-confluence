@@ -55,7 +55,7 @@ func TestCreateContentRequestFromResourceData(t *testing.T) {
 	if request.Body.Value != "Content body" {
 		t.Fatalf("body value = %q, want %q", request.Body.Value, "Content body")
 	}
-	if request.Subtype != "live" {
+	if request.Subtype != "page" {
 		t.Fatalf("subtype = %q, want %q", request.Subtype, "page")
 	}
 }
