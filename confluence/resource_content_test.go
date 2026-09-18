@@ -16,7 +16,7 @@ func TestCreateContentRequestFromResourceData(t *testing.T) {
 		"body":   "Content body",
 		"title":  "Content title",
 		"parent": "654321",
-		"subtype": "page"
+		"subtype": "page",
 	})
 
 	body, err := json.Marshal(createContentRequestFromContent(contentFromResourceData(data)))
