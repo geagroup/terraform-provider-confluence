@@ -1,6 +1,6 @@
-module github.com/mirogta/terraform-provider-confluence
+module github.com/geagroup/terraform-provider-confluence
 
-go 1.16
+go 1.26
 
 require (
 	github.com/aws/aws-sdk-go v1.28.5 // indirect

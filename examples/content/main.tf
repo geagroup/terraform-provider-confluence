@@ -7,9 +7,10 @@ resource "random_pet" "pets" {
 }
 
 provider "confluence" {
-  site  = var.site
-  user  = var.user
-  token = var.token
+  site     = "api.atlassian.com"
+  cloud_id = "xxxx-xxxx-xxxx-xxxx"
+  user     = var.user
+  token    = var.token
 }
 
 resource "confluence_content" "example" {

@@ -1,4 +1,4 @@
-![](https://img.shields.io/github/workflow/status/mirogta/terraform-provider-confluence/release)
+![](https://img.shields.io/github/workflow/status/geagroup/terraform-provider-confluence/release)
 
 # Terraform Provider for Confluence
 

@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/mirogta/terraform-provider-confluence/confluence"
+	"github.com/geagroup/terraform-provider-confluence/confluence"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	}
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "mirogta/terraform-provider-confluence", opts)
+		err := plugin.Debug(context.Background(), "geagroup/terraform-provider-confluence", opts)
 		if err != nil {
 			log.Fatal(err.Error())
 		}

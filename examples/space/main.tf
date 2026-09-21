@@ -1,16 +1,17 @@
 provider "confluence" {
-  site  = var.site
-  user  = var.user
-  token = var.token
+  site     = "api.atlassian.com"
+  cloud_id = "xxxx-xxxx-xxxx-xxxx"
+  user     = var.user
+  token    = var.token
 }
-resource confluence_space "example" {
-  key = var.space
+resource "confluence_space" "example" {
+  key  = var.space
   name = "Terraformed Space"
 }
-resource confluence_content "example" {
+resource "confluence_content" "example" {
   space = confluence_space.example.key
   title = "Terraformed Page"
-  body = "Terraformed Content"
+  body  = "Terraformed Content"
 }
 
 variable "site" {
