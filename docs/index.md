@@ -66,6 +66,17 @@ Static credentials must be passed to the provider block.
   authentication. This can also be set via the `CONFLUENCE_CLOUD_ID`
   environment variable.
 
+- `allow_unverified_site` - (Optional) Allow API requests to a self-hosted
+  Confluence domain that is not an Atlassian Cloud domain. Defaults to `false`.
+  This can also be set via the `CONFLUENCE_ALLOW_UNVERIFIED_SITE` environment
+  variable.
+
+- `allow_private_site` - (Optional) Allow the configured Confluence hostname
+  to resolve to private or otherwise non-public IP addresses. This is required
+  for private-network Confluence Server installations and defaults to `false`.
+  This can also be set via the `CONFLUENCE_ALLOW_PRIVATE_SITE` environment
+  variable.
+
 - `user` - (Required) For Confluence Cloud the user is your user's email
   address. For Confluence Server this is the username of the user to login.
   This can also be set via the `CONFLUENCE_USER` environment variable.
