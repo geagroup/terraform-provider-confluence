@@ -1,9 +1,29 @@
+version: "2"
 linters:
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: struct field `\w*Id` should be `\w*ID`
+      - path: (.+)\.go$
+        text: method parameter `\w*Id` should be `\w*ID`
+      - path: (.+)\.go$
+        text: var `\w*Id` should be `\w*ID`
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
   enable:
     - gofmt
-    - golint
-issues:
-  exclude:
-    - struct field `\w*Id` should be `\w*ID`
-    - method parameter `\w*Id` should be `\w*ID`
-    - var `\w*Id` should be `\w*ID`
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

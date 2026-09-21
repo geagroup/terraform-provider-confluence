@@ -12,10 +12,10 @@ import (
 
 func TestCreateContentRequestFromResourceData(t *testing.T) {
 	data := schema.TestResourceDataRaw(t, resourceContent().Schema, map[string]interface{}{
-		"space":  "123456",
-		"body":   "Content body",
-		"title":  "Content title",
-		"parent": "654321",
+		"space":   "123456",
+		"body":    "Content body",
+		"title":   "Content title",
+		"parent":  "654321",
 		"subtype": "page",
 	})
 

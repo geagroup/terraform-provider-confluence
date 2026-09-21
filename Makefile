@@ -38,7 +38,7 @@ install: $(BINARY_NAME)
 uninstall:
 	rm -f $(INSTALL_DIR)/$(BINARY_NAME)
 
-bin/golangci-lint:
+bin/golangci-lint: scripts/get-golangci.sh
 	scripts/get-golangci.sh
 
 .PHONY: all build check clean fmt install test testacc uninstall
