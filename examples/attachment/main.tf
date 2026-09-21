@@ -1,16 +1,17 @@
 provider "confluence" {
-  site  = var.site
-  user  = var.user
-  token = var.token
+  site     = "api.atlassian.com"
+  cloud_id = "xxxx-xxxx-xxxx-xxxx"
+  user     = var.user
+  token    = var.token
 }
 
-resource confluence_attachment "example" {
+resource "confluence_attachment" "example" {
   title = "example.txt"
   data  = "This is the contents of the example attachment."
   page  = confluence_content.example.id
 }
 
-resource confluence_content "example" {
+resource "confluence_content" "example" {
   title = "Example Page"
   body  = "This page has a <ac:link><ri:attachment ri:filename=\"example.txt\"/><ac:plain-text-link-body><![CDATA[file attachment]]></ac:plain-text-link-body></ac:link>."
   space = var.space

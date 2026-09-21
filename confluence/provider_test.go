@@ -27,7 +27,17 @@ func TestProvider(t *testing.T) {
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = Provider()
+	var _ = Provider()
+}
+
+func TestProviderCloudIDOptional(t *testing.T) {
+	cloudID := Provider().Schema["cloud_id"]
+	if cloudID == nil {
+		t.Fatal("cloud_id must be defined")
+	}
+	if !cloudID.Optional {
+		t.Fatal("cloud_id must be optional")
+	}
 }
 
 func testAccPreCheck(t *testing.T) {

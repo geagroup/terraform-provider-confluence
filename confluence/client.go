@@ -18,6 +18,7 @@ type Client struct {
 	baseURL   *url.URL
 	basePath  string
 	publicURL *url.URL
+	cloudID   string
 }
 
 // NewClientInput provides information to connect to the Confluence API
@@ -27,6 +28,7 @@ type NewClientInput struct {
 	publicSite       string
 	publicSiteScheme string
 	context          string
+	cloudID          string
 	user             string
 	token            string
 }
@@ -44,7 +46,13 @@ type ErrorResponse struct {
 }
 
 // NewClient returns an authenticated client ready to use
-func NewClient(input *NewClientInput) *Client {
+func NewClient(input *NewClientInput) (*Client, error) {
+	if input.cloudID != "" &&
+		input.site != "atlassian.com" &&
+		!strings.HasSuffix(input.site, ".atlassian.com") {
+		return nil, fmt.Errorf("site must have suffix atlassian.com when cloud_id is configured")
+	}
+
 	publicURL := url.URL{
 		Scheme: input.publicSiteScheme,
 		Host:   input.site,
@@ -59,6 +67,9 @@ func NewClient(input *NewClientInput) *Client {
 	if strings.HasSuffix(input.site, ".atlassian.net") {
 		basePath = "/wiki"
 	}
+	if input.cloudID != "" {
+		basePath = fmt.Sprintf("/ex/confluence/%s/", input.cloudID)
+	}
 	baseURL := url.URL{
 		Scheme: input.siteScheme,
 		Host:   input.site,
@@ -71,7 +82,8 @@ func NewClient(input *NewClientInput) *Client {
 		baseURL:   &baseURL,
 		basePath:  basePath,
 		publicURL: &publicURL,
-	}
+		cloudID:   input.cloudID,
+	}, nil
 }
 
 // GetString uses the client to send a GET request and returns a string
@@ -178,7 +190,7 @@ func (c *Client) do(method, path, contentType string, body *bytes.Buffer, result
 
 // do uses the client to send a specified request
 func (c *Client) doRaw(method, path, contentType string, body *bytes.Buffer) (*bytes.Buffer, error) {
-	fullPath := c.basePath + path
+	fullPath := strings.TrimRight(c.basePath, "/") + "/" + strings.TrimLeft(path, "/")
 	u, err := c.baseURL.Parse(fullPath)
 	if err != nil {
 		return nil, err

@@ -62,6 +62,10 @@ Static credentials must be passed to the provider block.
   Defaults to `https`. This can also be set via the `CONFLUENCE_PUBLIC_SITE_SCHEMA`
   environment variable.
 
+- `cloud_id` - (Optional) Atlassian Cloud ID used for service account
+  authentication. This can also be set via the `CONFLUENCE_CLOUD_ID`
+  environment variable.
+
 - `user` - (Required) For Confluence Cloud the user is your user's email
   address. For Confluence Server this is the username of the user to login.
   This can also be set via the `CONFLUENCE_USER` environment variable.
