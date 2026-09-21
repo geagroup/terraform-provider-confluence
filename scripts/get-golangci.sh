@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-GOLANGCI_VERSION=v2.3.0
+GOLANGCI_VERSION=v2.4.0
 
 mkdir -p bin
 curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
