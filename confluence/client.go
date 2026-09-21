@@ -2,12 +2,15 @@ package confluence
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -19,18 +22,22 @@ type Client struct {
 	basePath  string
 	publicURL *url.URL
 	cloudID   string
+	user      string
+	token     string
 }
 
 // NewClientInput provides information to connect to the Confluence API
 type NewClientInput struct {
-	site             string
-	siteScheme       string
-	publicSite       string
-	publicSiteScheme string
-	context          string
-	cloudID          string
-	user             string
-	token            string
+	site                string
+	siteScheme          string
+	publicSite          string
+	publicSiteScheme    string
+	context             string
+	cloudID             string
+	user                string
+	token               string
+	allowPrivateSite    bool
+	allowUnverifiedSite bool
 }
 
 // ErrorResponse describes why a request failed
@@ -47,43 +54,165 @@ type ErrorResponse struct {
 
 // NewClient returns an authenticated client ready to use
 func NewClient(input *NewClientInput) (*Client, error) {
-	if input.cloudID != "" &&
-		input.site != "atlassian.com" &&
-		!strings.HasSuffix(input.site, ".atlassian.com") {
-		return nil, fmt.Errorf("site must have suffix atlassian.com when cloud_id is configured")
+	baseURL, err := validatedSiteURL(input.siteScheme, input.site)
+	if err != nil {
+		return nil, fmt.Errorf("invalid site: %w", err)
+	}
+	if input.cloudID != "" && !strings.EqualFold(baseURL.Hostname(), "api.atlassian.com") {
+		return nil, fmt.Errorf("site must be api.atlassian.com when cloud_id is configured")
+	}
+	if isAtlassianHost(baseURL.Hostname()) {
+		if baseURL.Scheme != "https" {
+			return nil, fmt.Errorf("atlassian sites must use https")
+		}
+	} else if !input.allowUnverifiedSite {
+		return nil, fmt.Errorf("site %q is not a verified Atlassian domain; set allow_unverified_site to use a self-hosted Confluence server", baseURL.Hostname())
+	}
+	if !input.allowPrivateSite {
+		if ip := net.ParseIP(baseURL.Hostname()); ip != nil && isPrivateAddress(ip) {
+			return nil, fmt.Errorf("site %q resolves to a private or non-routable address; set allow_private_site to permit it", baseURL.Hostname())
+		}
 	}
 
-	publicURL := url.URL{
-		Scheme: input.publicSiteScheme,
-		Host:   input.site,
-	}
+	publicSite := input.site
 	if input.publicSite != "" {
-		publicURL.Host = input.publicSite
+		publicSite = input.publicSite
+	}
+	publicURL, err := validatedSiteURL(input.publicSiteScheme, publicSite)
+	if err != nil {
+		return nil, fmt.Errorf("invalid public_site: %w", err)
 	}
 
-	basePath := input.context
+	basePath, err := validatedContext(input.context)
+	if err != nil {
+		return nil, err
+	}
 
-	// Default to /wiki if using Confluence Cloud`
-	if strings.HasSuffix(input.site, ".atlassian.net") {
+	// Default to /wiki if using Confluence Cloud
+	if strings.HasSuffix(strings.ToLower(baseURL.Hostname()), ".atlassian.net") {
 		basePath = "/wiki"
 	}
 	if input.cloudID != "" {
+		if strings.ContainsAny(input.cloudID, `/\?#`) {
+			return nil, fmt.Errorf("cloud_id must be a single URL path segment")
+		}
 		basePath = fmt.Sprintf("/ex/confluence/%s/", input.cloudID)
 	}
-	baseURL := url.URL{
-		Scheme: input.siteScheme,
-		Host:   input.site,
-	}
-	baseURL.User = url.UserPassword(input.user, input.token)
+
 	return &Client{
-		client: &http.Client{
-			Timeout: time.Second * 10,
-		},
-		baseURL:   &baseURL,
+		client:    newHTTPClient(baseURL, input.allowPrivateSite, input.user, input.token),
+		baseURL:   baseURL,
 		basePath:  basePath,
-		publicURL: &publicURL,
+		publicURL: publicURL,
 		cloudID:   input.cloudID,
+		user:      input.user,
+		token:     input.token,
 	}, nil
+}
+
+func validatedSiteURL(scheme, site string) (*url.URL, error) {
+	if scheme != "https" && scheme != "http" {
+		return nil, fmt.Errorf("scheme must be https or http")
+	}
+	if site == "" || strings.ContainsAny(site, `/\?#`) {
+		return nil, fmt.Errorf("hostname must not be empty or contain a path, query, fragment, or backslash")
+	}
+	u, err := url.Parse(scheme + "://" + site)
+	if err != nil {
+		return nil, err
+	}
+	if u.Hostname() == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
+		return nil, fmt.Errorf("hostname is malformed")
+	}
+	return u, nil
+}
+
+func validatedContext(value string) (string, error) {
+	if value == "" {
+		return "", nil
+	}
+	if strings.Contains(value, `\`) {
+		return "", fmt.Errorf("context must be an absolute URL path")
+	}
+	u, err := url.Parse(value)
+	if err != nil {
+		return "", fmt.Errorf("invalid context: %w", err)
+	}
+	if !strings.HasPrefix(value, "/") || strings.HasPrefix(value, "//") ||
+		u.IsAbs() || u.Host != "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return "", fmt.Errorf("context must be an absolute URL path without a host, query, or fragment")
+	}
+	decodedPath, err := url.PathUnescape(u.EscapedPath())
+	if err != nil {
+		return "", fmt.Errorf("invalid context: %w", err)
+	}
+	cleaned := path.Clean(decodedPath)
+	if cleaned != strings.TrimSuffix(decodedPath, "/") {
+		return "", fmt.Errorf("context must not contain traversal or duplicate path segments")
+	}
+	return cleaned, nil
+}
+
+func isAtlassianHost(host string) bool {
+	host = strings.ToLower(host)
+	return host == "api.atlassian.com" || strings.HasSuffix(host, ".atlassian.net")
+}
+
+func newHTTPClient(baseURL *url.URL, allowPrivate bool, user, token string) *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	transport.DialContext = restrictedDialContext(allowPrivate)
+
+	return &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: transport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if !strings.EqualFold(req.URL.Scheme, baseURL.Scheme) ||
+				!strings.EqualFold(req.URL.Host, baseURL.Host) {
+				return fmt.Errorf("refusing redirect to a different origin: %s", req.URL.Redacted())
+			}
+			req.SetBasicAuth(user, token)
+			return nil
+		},
+	}
+}
+
+func restrictedDialContext(allowPrivate bool) func(context.Context, string, string) (net.Conn, error) {
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return func(ctx context.Context, network, address string) (net.Conn, error) {
+		host, port, err := net.SplitHostPort(address)
+		if err != nil {
+			return nil, fmt.Errorf("invalid request address %q: %w", address, err)
+		}
+		addresses, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+		if err != nil {
+			return nil, err
+		}
+		if len(addresses) == 0 {
+			return nil, fmt.Errorf("site %q did not resolve to an IP address", host)
+		}
+		for _, address := range addresses {
+			if !allowPrivate && isPrivateAddress(address.IP) {
+				return nil, fmt.Errorf("site %q resolves to a private or non-routable address", host)
+			}
+		}
+		resolvedHost := addresses[0].IP.String()
+		if addresses[0].Zone != "" {
+			resolvedHost += "%" + addresses[0].Zone
+		}
+		return dialer.DialContext(ctx, network, net.JoinHostPort(resolvedHost, port))
+	}
+}
+
+func isPrivateAddress(ip net.IP) bool {
+	return ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast() ||
+		!ip.IsGlobalUnicast() || isSharedAddress(ip)
+}
+
+func isSharedAddress(ip net.IP) bool {
+	_, sharedRange, _ := net.ParseCIDR("100.64.0.0/10")
+	return sharedRange.Contains(ip)
 }
 
 // GetString uses the client to send a GET request and returns a string
@@ -190,8 +319,7 @@ func (c *Client) do(method, path, contentType string, body *bytes.Buffer, result
 
 // do uses the client to send a specified request
 func (c *Client) doRaw(method, path, contentType string, body *bytes.Buffer) (*bytes.Buffer, error) {
-	fullPath := strings.TrimRight(c.basePath, "/") + "/" + strings.TrimLeft(path, "/")
-	u, err := c.baseURL.Parse(fullPath)
+	u, fullPath, err := c.requestURL(path)
 	if err != nil {
 		return nil, err
 	}
@@ -202,6 +330,7 @@ func (c *Client) doRaw(method, path, contentType string, body *bytes.Buffer) (*b
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
+	req.SetBasicAuth(c.user, c.token)
 	req.Header.Add("X-Atlassian-Token", "nocheck")
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -233,6 +362,25 @@ func (c *Client) doRaw(method, path, contentType string, body *bytes.Buffer) (*b
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *Client) requestURL(requestPath string) (*url.URL, string, error) {
+	if strings.Contains(requestPath, `\`) {
+		return nil, "", fmt.Errorf("request path must not contain a backslash")
+	}
+	ref, err := url.Parse(requestPath)
+	if err != nil {
+		return nil, "", err
+	}
+	if !strings.HasPrefix(requestPath, "/") || strings.HasPrefix(requestPath, "//") ||
+		ref.IsAbs() || ref.Host != "" || ref.User != nil || ref.Fragment != "" {
+		return nil, "", fmt.Errorf("request path must be an absolute path on the configured site")
+	}
+	fullPath := strings.TrimRight(c.basePath, "/") + "/" + strings.TrimLeft(ref.Path, "/")
+	u := *c.baseURL
+	u.Path = fullPath
+	u.RawQuery = ref.RawQuery
+	return &u, fullPath, nil
 }
 
 func (e *ErrorResponse) String() string {

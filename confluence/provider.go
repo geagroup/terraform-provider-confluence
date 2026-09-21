@@ -38,6 +38,18 @@ func Provider() *schema.Provider {
 				Description: "Confluence path context (Will default to /wiki if using an atlassian.net hostname)",
 				DefaultFunc: schema.EnvDefaultFunc("CONFLUENCE_CONTEXT", ""),
 			},
+			"allow_unverified_site": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Allow a self-hosted Confluence domain that is not an Atlassian Cloud domain",
+				DefaultFunc: schema.EnvDefaultFunc("CONFLUENCE_ALLOW_UNVERIFIED_SITE", false),
+			},
+			"allow_private_site": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Allow the Confluence hostname to resolve to private or non-routable IP addresses",
+				DefaultFunc: schema.EnvDefaultFunc("CONFLUENCE_ALLOW_PRIVATE_SITE", false),
+			},
 			"cloud_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -69,14 +81,16 @@ func Provider() *schema.Provider {
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	client, err := NewClient(&NewClientInput{
-		site:             d.Get("site").(string),
-		siteScheme:       d.Get("site_scheme").(string),
-		publicSite:       d.Get("public_site").(string),
-		publicSiteScheme: d.Get("public_site_scheme").(string),
-		context:          d.Get("context").(string),
-		cloudID:          d.Get("cloud_id").(string),
-		token:            d.Get("token").(string),
-		user:             d.Get("user").(string),
+		site:                d.Get("site").(string),
+		siteScheme:          d.Get("site_scheme").(string),
+		publicSite:          d.Get("public_site").(string),
+		publicSiteScheme:    d.Get("public_site_scheme").(string),
+		context:             d.Get("context").(string),
+		cloudID:             d.Get("cloud_id").(string),
+		token:               d.Get("token").(string),
+		user:                d.Get("user").(string),
+		allowPrivateSite:    d.Get("allow_private_site").(bool),
+		allowUnverifiedSite: d.Get("allow_unverified_site").(bool),
 	})
 	if err != nil {
 		return nil, err
