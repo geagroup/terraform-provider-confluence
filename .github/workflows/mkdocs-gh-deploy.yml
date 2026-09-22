@@ -5,11 +5,16 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Set up Python 3.10
         uses: actions/setup-python@v6
         with:
@@ -26,8 +31,4 @@ jobs:
       - name: Pip install requirements
         run: pip install -r requirements.txt
       - name: MkDocs
-        env:
-          GH_PAT: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git
-          mkdocs gh-deploy
+        run: mkdocs gh-deploy
