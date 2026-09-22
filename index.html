@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" /><link rel="canonical" href="https://github.com/geagroup/terraform-provider-confluence/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>Terraform Provider: Confluence</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Getting Started";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = "/geagroup/terraform-provider-confluence/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> Terraform Provider: Confluence
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting Started</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#example-usage">Example Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#authentication">Authentication</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#argument-reference">Argument Reference</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Resources</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="resources/confluence_attachment/">confluence_attachment</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="resources/confluence_content/">confluence_content</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="resources/confluence_space/">confluence_space</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">Terraform Provider: Confluence</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Getting Started</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/geagroup/terraform-provider-confluence/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="confluence-provider">Confluence Provider</h1>
+<p>The Confluence provider is used to interact with the Confluence. The
+provider needs to be configured with the proper credentials before it can be
+used.</p>
+<p>Use the navigation to the left to read about the available data sources.</p>
+<h2 id="example-usage">Example Usage</h2>
+<pre><code class="language-hcl">provider &quot;confluence&quot; {
+  site  = &quot;my-site.atlassian.net&quot;
+  user  = &quot;my-user&quot;
+  token = &quot;my-token&quot;
+}
+
+resource confluence_content &quot;default&quot; {
+  space = &quot;MYSPACE&quot;
+  title = &quot;Example Page&quot;
+  body  = &quot;&lt;p&gt;This page was built with Terraform&lt;/p&gt;&quot;
+}
+
+resource confluence_space &quot;default&quot; {
+  key  = &quot;MYSPACE&quot;
+  name   = &quot;My-Space&quot;
+}
+</code></pre>
+<h2 id="authentication">Authentication</h2>
+<p>Static credentials must be passed to the provider block.</p>
+<h2 id="argument-reference">Argument Reference</h2>
+<ul>
+<li>
+<p><code>site</code> - (Required) For Confluence Cloud: The site is the name of the site
+  and appears in your wiki URL (https://<em>my-site.atlassian.net</em>/wiki/spaces/my-space/).
+  For Confluence Server users this should be the hostname of your Confluence
+  instance that can receive <code>/rest/api</code> requests. This can also be set via the
+  <code>CONFLUENCE_SITE</code> environment variable.</p>
+</li>
+<li>
+<p><code>site_schema</code> - (Optional) Set the schema for connecting to the REST API.
+  Defaults to <code>https</code>. This can also be set via the <code>CONFLUENCE_SITE_SCHEMA</code>
+  environment variable.</p>
+</li>
+<li>
+<p><code>public_site</code> - (Optional) For Confluence Server instances where your
+  Confluence site URL is different than the hostname that serves REST API
+  requests. Defaults to <code>site</code> if not set. This can also be set via the
+  <code>CONFLUENCE_PUBLIC_SITE</code> environment variable.</p>
+</li>
+<li>
+<p><code>public_site_schema</code> - (Optional) Set the schema for generated public URLs.
+  Defaults to <code>https</code>. This can also be set via the <code>CONFLUENCE_PUBLIC_SITE_SCHEMA</code>
+  environment variable.</p>
+</li>
+<li>
+<p><code>cloud_id</code> - (Optional) Atlassian Cloud ID used for service account
+  authentication. This can also be set via the <code>CONFLUENCE_CLOUD_ID</code>
+  environment variable.</p>
+</li>
+<li>
+<p><code>allow_unverified_site</code> - (Optional) Allow API requests to a self-hosted
+  Confluence domain that is not an Atlassian Cloud domain. Defaults to <code>false</code>.
+  This can also be set via the <code>CONFLUENCE_ALLOW_UNVERIFIED_SITE</code> environment
+  variable.</p>
+</li>
+<li>
+<p><code>allow_private_site</code> - (Optional) Allow the configured Confluence hostname
+  to resolve to private or otherwise non-public IP addresses. This is required
+  for private-network Confluence Server installations and defaults to <code>false</code>.
+  This can also be set via the <code>CONFLUENCE_ALLOW_PRIVATE_SITE</code> environment
+  variable.</p>
+</li>
+<li>
+<p><code>user</code> - (Required) For Confluence Cloud the user is your user's email
+  address. For Confluence Server this is the username of the user to login.
+  This can also be set via the <code>CONFLUENCE_USER</code> environment variable.</p>
+</li>
+<li>
+<p><code>token</code> - (Required) For Confluence Cloud the token is a secret every user
+  can generate. It is similar to a password and should be treated as such. For
+  Confluence Server, this is the password of the user. This can also be set via
+  the <code>CONFLUENCE_TOKEN</code> environment variable. For Cloud token details, see
+  <a href="https://id.atlassian.com/manage/api-tokens">Manage your account</a>.</p>
+</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="resources/confluence_attachment/" class="btn btn-neutral float-right" title="confluence_attachment">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/geagroup/terraform-provider-confluence" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+      <span><a href="resources/confluence_attachment/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2026-09-22 05:11:20.250508+00:00
+-->
