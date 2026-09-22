@@ -1,0 +1,28 @@
+name: SonarQube
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: SonarQube Scan
+    if: github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://infrastructure.projectonline.digital.gea.com/
+        with:
+          args: >
+            -Dsonar.projectKey=terraform-provider-confluence
+            -Dsonar.sources=.
