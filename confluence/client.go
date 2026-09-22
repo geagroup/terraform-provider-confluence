@@ -323,10 +323,15 @@ func (c *Client) doRaw(method, path, contentType string, body *bytes.Buffer) (*b
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(method, u.String(), body)
+	req, err := http.NewRequest(method, "/", body)
 	if err != nil {
 		return nil, err
 	}
+	req.URL.Scheme = c.baseURL.Scheme
+	req.URL.Host = c.baseURL.Host
+	req.URL.Path = u.Path
+	req.URL.RawPath = u.RawPath
+	req.URL.RawQuery = u.RawQuery
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
