@@ -20,7 +20,7 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://infrastructure.projectonline.digital.gea.com/
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
         with:
           args: >
             -Dsonar.projectKey=terraform-provider-confluence
